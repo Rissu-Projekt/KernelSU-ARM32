@@ -466,7 +466,7 @@ private fun ModuleItem(
                             .padding(0.dp)
                             .defaultMinSize(52.dp, 32.dp),
                         onClick = { onUpdate(module) },
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(15.dp),
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
