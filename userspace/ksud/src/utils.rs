@@ -12,6 +12,9 @@ use std::fs::{set_permissions, Permissions};
 #[cfg(unix)]
 use std::os::unix::prelude::PermissionsExt;
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
+use rustix::process;
+
 pub fn ensure_clean_dir(dir: &str) -> Result<()> {
     let path = Path::new(dir);
     log::debug!("ensure_clean_dir: {}", path.display());
@@ -161,7 +164,7 @@ pub fn switch_cgroups() {
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
 pub fn umask(mask: u32) {
-    unsafe { libc::umask(mask) };
+    process::umask(rustix::fs::Mode::from_raw_mode(mask));
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "android")))]

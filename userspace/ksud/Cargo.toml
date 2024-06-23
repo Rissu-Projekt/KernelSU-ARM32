@@ -2,7 +2,7 @@
 name = "ksud"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.77"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -36,9 +36,11 @@ getopts = "0.2"
 sha256 = "1"
 tempdir = "0.3"
 chrono = "0.4"
+rustix = { git = "https://github.com/bytecodealliance/rustix", branch = "main", features = ["all-apis"] }
+loopdev = { git = "https://github.com/Rissu-Projekt/loopdev", branch = "main" }
 
 [target.'cfg(any(target_os = "android", target_os = "linux"))'.dependencies]
-sys-mount = { git = "https://github.com/tiann/sys-mount", branch = "loopfix" }
+sys-mount = { git = "https://github.com/Rissu-Projekt/sys-mount", branch = "main" }
 # some android specific dependencies which compiles under unix are also listed here for convenience of coding
 android-properties = { version = "0.2.2", features = ["bionic-deprecated"] }
 procfs = "0.16"

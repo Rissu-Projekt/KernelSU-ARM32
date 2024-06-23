@@ -71,6 +71,7 @@ fun HomeScreen(navigator: DestinationsNavigator) {
             }
             UpdateCard()
             InfoCard()
+            RissuUnofficialCard()
             DonateCard()
             LearnMoreCard()
             Spacer(Modifier)
@@ -326,6 +327,33 @@ fun DonateCard() {
 }
 
 @Composable
+fun RissuUnofficialCard() {
+    val uriHandler = LocalUriHandler.current
+
+    ElevatedCard {
+
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                uriHandler.openUri("https://rsuntk.github.io")
+            }
+            .padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column() {
+                Text(
+                    text = stringResource(R.string.home_rissu_unofficial_title),
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.home_rissu_unofficial_content),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun InfoCard() {
     val context = LocalContext.current
 
@@ -341,7 +369,7 @@ private fun InfoCard() {
             @Composable
             fun InfoCardItem(label: String, content: String) {
                 contents.appendLine(label).appendLine(content).appendLine()
-                Text(text = label, style = MaterialTheme.typography.bodyLarge)
+                Text(text = label, style = MaterialTheme.typography.titleMedium)
                 Text(text = content, style = MaterialTheme.typography.bodyMedium)
             }
 
