@@ -134,13 +134,7 @@ void escape_to_root(void)
 	memcpy(&cred->cap_ambient, &profile->capabilities.effective,
 	       sizeof(cred->cap_ambient));
 
-	// disable seccomp
-#if defined(CONFIG_GENERIC_ENTRY) &&                                           \
-	LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
-	current_thread_info()->syscall_work &= ~SYSCALL_WORK_SECCOMP;
-#else
 	current_thread_info()->flags &= ~(TIF_SECCOMP | _TIF_SECCOMP);
-#endif
 
 #ifdef CONFIG_SECCOMP
 	current->seccomp.mode = 0;
@@ -412,10 +406,9 @@ static bool should_umount(struct path *path)
 
 static int ksu_umount_mnt(struct path *path, int flags)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0) || defined(KSU_NONGKI_UMOUNT)
+#if defined(KSU_NONGKI_UMOUNT)
 	return path_umount(path, flags);
 #else
-        // TODO: umount for non-gki
 	return -ENOSYS;
 #endif
 }

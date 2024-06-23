@@ -116,22 +116,8 @@ struct my_dir_context {
 	int depth;
 	int *stop;
 };
-// https://docs.kernel.org/filesystems/porting.html
-// filldir_t (readdir callbacks) calling conventions have changed. 
-// Instead of returning 0 or -E... it returns bool now. 
-// false means "no more" (as -E... used to) and true - "keep going" (as 0 in old calling conventions). 
-// Rationale: callers never looked at specific -E... values anyway. -> iterate_shared() instances require no changes at all, all filldir_t ones in the tree converted.
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
-#define FILLDIR_RETURN_TYPE bool
-#define FILLDIR_ACTOR_CONTINUE true
-#define FILLDIR_ACTOR_STOP false
-#else
-#define FILLDIR_RETURN_TYPE int
-#define FILLDIR_ACTOR_CONTINUE 0
-#define FILLDIR_ACTOR_STOP -EINVAL
-#endif
 
-FILLDIR_RETURN_TYPE my_actor(struct dir_context *ctx, const char *name,
+int my_actor(struct dir_context *ctx, const char *name,
 			     int namelen, loff_t off, u64 ino,
 			     unsigned int d_type)
 {
@@ -141,21 +127,21 @@ FILLDIR_RETURN_TYPE my_actor(struct dir_context *ctx, const char *name,
 
 	if (!my_ctx) {
 		pr_err("Invalid context\n");
-		return FILLDIR_ACTOR_STOP;
+		return -EINVAL;
 	}
 	if (my_ctx->stop && *my_ctx->stop) {
 		pr_info("Stop searching\n");
-		return FILLDIR_ACTOR_STOP;
+		return -EINVAL;
 	}
 
 	if (!strncmp(name, "..", namelen) || !strncmp(name, ".", namelen))
-		return FILLDIR_ACTOR_CONTINUE; // Skip "." and ".."
+		return 0; // Skip "." and ".."
 
 	if (snprintf(dirpath, DATA_PATH_LEN, "%s/%.*s", my_ctx->parent_dir,
 		     namelen, name) >= DATA_PATH_LEN) {
 		pr_err("Path too long: %s/%.*s\n", my_ctx->parent_dir, namelen,
 		       name);
-		return FILLDIR_ACTOR_CONTINUE;
+		return 0;
 	}
 
 	if (d_type == DT_DIR && my_ctx->depth > 0 &&
@@ -164,7 +150,7 @@ FILLDIR_RETURN_TYPE my_actor(struct dir_context *ctx, const char *name,
 
 		if (!data) {
 			pr_err("Failed to allocate memory for %s\n", dirpath);
-			return FILLDIR_ACTOR_CONTINUE;
+			return 0;
 		}
 
 		strscpy(data->dirpath, dirpath, DATA_PATH_LEN);
@@ -182,7 +168,7 @@ FILLDIR_RETURN_TYPE my_actor(struct dir_context *ctx, const char *name,
 			list_for_each_entry(pos, &apk_path_hash_list, list) {
 				if (hash == pos->hash) {
 					pos->exists = true;
-					return FILLDIR_ACTOR_CONTINUE;
+					return 0;
 				}
 			}
 
@@ -207,7 +193,7 @@ FILLDIR_RETURN_TYPE my_actor(struct dir_context *ctx, const char *name,
 		}
 	}
 
-	return FILLDIR_ACTOR_CONTINUE;
+	return 0;
 }
 
 void search_manager(const char *path, int depth, struct list_head *uid_data)

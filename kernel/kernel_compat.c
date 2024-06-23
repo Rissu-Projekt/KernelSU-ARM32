@@ -137,19 +137,6 @@ ssize_t ksu_kernel_write_compat(struct file *p, const void *buf, size_t count,
 #endif
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-long ksu_strncpy_from_user_nofault(char *dst, const void __user *unsafe_addr,
-				   long count)
-{
-	return strncpy_from_user_nofault(dst, unsafe_addr, count);
-}
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0)
-long ksu_strncpy_from_user_nofault(char *dst, const void __user *unsafe_addr,
-				   long count)
-{
-	return strncpy_from_unsafe_user(dst, unsafe_addr, count);
-}
-#else
 // Copied from: https://elixir.bootlin.com/linux/v4.9.337/source/mm/maccess.c#L201
 long ksu_strncpy_from_user_nofault(char *dst, const void __user *unsafe_addr,
 				   long count)
@@ -175,4 +162,3 @@ long ksu_strncpy_from_user_nofault(char *dst, const void __user *unsafe_addr,
 
 	return ret;
 }
-#endif
