@@ -278,18 +278,7 @@ pub fn run() -> Result<()> {
             Debug::Su => crate::ksu::grant_root(),
             Debug::Mount => event::mount_systemlessly(defs::MODULE_DIR),
             Debug::Test => todo!(),
-        },
-
-        Commands::BootPatch {
-            boot,
-            init,
-            kernel,
-            module,
-            ota,
-            flash,
-            out,
-            magiskboot,
-        } => crate::boot_patch::patch(boot, kernel, module, init, ota, flash, out, magiskboot),
+        }
     };
 
     if let Err(e) = &result {
