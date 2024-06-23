@@ -15,15 +15,15 @@ import androidx.core.view.ViewCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorScheme = darkColorScheme(
-    primary = YELLOW,
-    secondary = YELLOW_DARK,
-    tertiary = SECONDARY_DARK
+    primary = ORANGE_PRIMARY_DARK,
+    secondary = ORANGE_SECONDARY_DARK,
+    tertiary = ORANGE_TERTIARY_DARK
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = YELLOW,
-    secondary = YELLOW_LIGHT,
-    tertiary = SECONDARY_LIGHT
+    primary = ORANGE_PRIMARY_LIGHT,
+    secondary = ORANGE_SECONDARY_LIGHT,
+    tertiary = ORANGE_TERTIARY_LIGHT
 )
 
 @Composable

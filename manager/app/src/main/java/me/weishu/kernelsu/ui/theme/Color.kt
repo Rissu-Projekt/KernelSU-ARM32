@@ -2,9 +2,10 @@ package me.weishu.kernelsu.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val YELLOW = Color(0xFFeed502)
-val YELLOW_LIGHT = Color(0xFFffff52)
-val SECONDARY_LIGHT = Color(0xffa9817f)
+val ORANGE_PRIMARY_LIGHT = Color(0xFF8B5000)
+val ORANGE_SECONDARY_LIGHT = Color(0xFFFFDCBE)
+val ORANGE_TERTIARY_LIGHT = Color(0xFFF5EDEB)
 
-val YELLOW_DARK = Color(0xFFb7a400)
-val SECONDARY_DARK = Color(0xFF4c2b2b)
+val ORANGE_PRIMARY_DARK = Color(0xFFFEB870)
+val ORANGE_SECONDARY_DARK = Color(0xFF58422B)
+val ORANGE_TERTIARY_DARK = Color(0xFF201B17)
