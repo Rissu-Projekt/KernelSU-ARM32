@@ -180,7 +180,7 @@ pub fn has_magisk() -> bool {
 fn is_ok_empty(dir: &str) -> bool {
     use std::result::Result::Ok;
 
-    match fs::read_dir(dir) {
+    match std::fs::read_dir(dir) {
         Ok(mut entries) => entries.next().is_none(),
         Err(_) => false,
     }
