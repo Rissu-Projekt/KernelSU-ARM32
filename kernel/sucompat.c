@@ -5,6 +5,7 @@
 #include <linux/types.h>
 #include <linux/uaccess.h>
 #include <linux/version.h>
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
 #include <linux/sched/task_stack.h>
 #else
@@ -157,15 +158,4 @@ int ksu_handle_devpts(struct inode *inode)
 	}
 
 	return 0;
-}
-
-// Rissu: drop CONFIG_KPROBES
-
-// sucompat: permited process can execute 'su' to gain root access.
-void ksu_sucompat_init()
-{
-}
-
-void ksu_sucompat_exit()
-{
 }

@@ -4,10 +4,18 @@
 #include <linux/err.h>
 #include <linux/fs.h>
 #include <linux/input-event-codes.h>
+#include <linux/version.h>
+
+// rissu: fixes for fatal_signal_pending
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#include <linux/sched/signal.h>
+#else
+#include <linux/sched.h>
+#endif
+
 #include <linux/printk.h>
 #include <linux/types.h>
 #include <linux/uaccess.h>
-#include <linux/version.h>
 #include <linux/workqueue.h>
 
 #include "allowlist.h"
@@ -105,12 +113,7 @@ static const char __user *get_user_arg_ptr(struct user_arg_ptr argv, int nr)
  * count() counts the number of strings in array ARGV.
  */
 
- /*
- * Make sure old GCC compiler can use __maybe_unused,
- * Test passed in 4.4.x ~ 4.9.x when use GCC.
- */
-
-static int __maybe_unused count(struct user_arg_ptr argv, int max)
+static int count(struct user_arg_ptr argv, int max)
 {
 	int i = 0;
 
@@ -136,7 +139,6 @@ static int __maybe_unused count(struct user_arg_ptr argv, int max)
 	return i;
 }
 
-// IMPORTANT NOTE: the call from execve_handler_pre WON'T provided correct value for envp and flags in GKI version
 int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
 				struct user_arg_ptr *argv, struct user_arg_ptr *envp, int *flags)
 {
@@ -444,13 +446,4 @@ static void stop_input_hook()
 	input_hook_stopped = true;
 	ksu_input_hook = false;
 	pr_info("stop input_hook\n");
-}
-
-// ksud: module support
-void ksu_ksud_init()
-{
-}
-
-void ksu_ksud_exit()
-{
 }

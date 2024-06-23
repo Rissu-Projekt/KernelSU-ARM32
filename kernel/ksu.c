@@ -1,3 +1,5 @@
+/* Rissu: Drop KernelSU's CONFIG_KPROBES */
+
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/workqueue.h>
@@ -29,11 +31,6 @@ int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
 	return ksu_handle_execveat_sucompat(fd, filename_ptr, argv, envp,
 					    flags);
 }
-
-extern void ksu_sucompat_init();
-extern void ksu_sucompat_exit();
-extern void ksu_ksud_init();
-extern void ksu_ksud_exit();
 
 int __init kernelsu_init(void)
 {
