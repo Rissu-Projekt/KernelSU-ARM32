@@ -37,6 +37,8 @@ fun AppProfileConfig(
             summary = stringResource(R.string.profile_umount_modules_summary),
             checked = if (enabled) {
                 profile.umountModules
+            } else {
+            	null
             },
             enabled = enabled,
             onCheckedChange = {
