@@ -18,7 +18,7 @@
     <string name="selinux_status_enforcing">Enforcing</string>
     <string name="selinux_status_permissive">Permissive</string>
     <string name="selinux_status_unknown">Unknown</string>
-    <string name="superuser">SuperUser</string>
+    <string name="superuser">Root Access</string>
     <string name="module_failed_to_enable">Failed to enable module: %s</string>
     <string name="module_failed_to_disable">Failed to disable module: %s</string>
     <string name="module_empty">No installed modules</string>
@@ -51,7 +51,9 @@
     <string name="home_learn_kernelsu_url">https://kernelsu.org/guide/what-is-kernelsu.html</string>
     <string name="home_click_to_learn_kernelsu">Learn how to install KernelSU and use modules</string>
     <string name="home_support_title">Support Us</string>
-    <string name="home_support_content">KernelSU is, and always will be, free, and open source. You can however show us that you care by making a donation.</string>
+    <string name="home_support_content">KernelSU is opensource, and always will be free. You can however show us that you care by making a donation.</string>
+    <string name="home_rissu_unofficial_title">Unofficial KernelSU</string>
+    <string name="home_rissu_unofficial_content">This KernelSU is unofficial, ported by Rissu to 32bit. I don\'t recommend this as main root method, and i doing this for fun!</string>
     <string name="about_source_code"><![CDATA[View source code at %1$s<br/>Join our %2$s channel]]></string>
     <string name="profile" translatable="false">App Profile</string>
     <string name="profile_default">Default</string>

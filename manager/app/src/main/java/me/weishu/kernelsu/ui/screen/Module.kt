@@ -461,14 +461,7 @@ private fun ModuleItem(
                 Spacer(modifier = Modifier.weight(1f, true))
 
                 if (updateUrl.isNotEmpty()) {
-                    Button(
-                        modifier = Modifier
-                            .padding(0.dp)
-                            .defaultMinSize(52.dp, 32.dp),
-                        onClick = { onUpdate(module) },
-                        shape = RoundedCornerShape(6.dp),
-                        contentPadding = PaddingValues(0.dp)
-                    ) {
+                    TextButton(onClick = { onUpdate(module) }, enabled = true) {
                         Text(
                             fontFamily = MaterialTheme.typography.labelMedium.fontFamily,
                             fontSize = MaterialTheme.typography.labelMedium.fontSize,

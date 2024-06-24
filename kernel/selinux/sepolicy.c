@@ -1,8 +1,8 @@
 #include "sepolicy.h"
-#include "linux/gfp.h"
-#include "linux/printk.h"
-#include "linux/slab.h"
-#include "linux/version.h"
+#include <linux/gfp.h>
+#include <linux/printk.h>
+#include <linux/slab.h>
+#include <linux/version.h>
 
 #include "../klog.h" // IWYU pragma: keep
 #include "ss/symtab.h"
@@ -78,22 +78,12 @@ static bool add_typeattribute(struct policydb *db, const char *type,
 	for (i = 0; i < n_slot; ++i)                                           \
 		for (cur = node_ptr[i]; cur; cur = cur->next)
 
-// htable is a struct instead of pointer above 5.8.0:
-// https://elixir.bootlin.com/linux/v5.8-rc1/source/security/selinux/ss/symtab.h
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-#define ksu_hashtab_for_each(htab, cur)                                        \
-	ksu_hash_for_each(htab.htable, htab.size, cur)
-#else
+
 #define ksu_hashtab_for_each(htab, cur)                                        \
 	ksu_hash_for_each(htab->htable, htab->size, cur)
-#endif
 
-// symtab_search is introduced on 5.9.0:
-// https://elixir.bootlin.com/linux/v5.9-rc1/source/security/selinux/ss/symtab.h
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 0)
 #define symtab_search(s, name) hashtab_search((s)->table, name)
 #define symtab_insert(s, name, datum) hashtab_insert((s)->table, name, datum)
-#endif
 
 #define avtab_for_each(avtab, cur)                                             \
 	ksu_hash_for_each(avtab.htable, avtab.nslot, cur);
@@ -465,48 +455,6 @@ static bool add_type_rule(struct policydb *db, const char *s, const char *t,
 	return true;
 }
 
-// 5.9.0 : static inline int hashtab_insert(struct hashtab *h, void *key, void
-// *datum, struct hashtab_key_params key_params) 5.8.0: int
-// hashtab_insert(struct hashtab *h, void *k, void *d);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-static u32 filenametr_hash(const void *k)
-{
-	const struct filename_trans_key *ft = k;
-	unsigned long hash;
-	unsigned int byte_num;
-	unsigned char focus;
-
-	hash = ft->ttype ^ ft->tclass;
-
-	byte_num = 0;
-	while ((focus = ft->name[byte_num++]))
-		hash = partial_name_hash(focus, hash);
-	return hash;
-}
-
-static int filenametr_cmp(const void *k1, const void *k2)
-{
-	const struct filename_trans_key *ft1 = k1;
-	const struct filename_trans_key *ft2 = k2;
-	int v;
-
-	v = ft1->ttype - ft2->ttype;
-	if (v)
-		return v;
-
-	v = ft1->tclass - ft2->tclass;
-	if (v)
-		return v;
-
-	return strcmp(ft1->name, ft2->name);
-}
-
-static const struct hashtab_key_params filenametr_key_params = {
-	.hash = filenametr_hash,
-	.cmp = filenametr_cmp,
-};
-#endif
-
 static bool add_filename_trans(struct policydb *db, const char *s,
 			       const char *t, const char *c, const char *d,
 			       const char *o)
@@ -534,51 +482,6 @@ static bool add_filename_trans(struct policydb *db, const char *s,
 		pr_warn("default type %s does not exist\n", d);
 		return false;
 	}
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)
-	struct filename_trans_key key;
-	key.ttype = tgt->value;
-	key.tclass = cls->value;
-	key.name = (char *)o;
-
-	struct filename_trans_datum *last = NULL;
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-	struct filename_trans_datum *trans =
-		policydb_filenametr_search(db, &key);
-#else
-	struct filename_trans_datum *trans =
-		hashtab_search(&db->filename_trans, &key);
-#endif
-	while (trans) {
-		if (ebitmap_get_bit(&trans->stypes, src->value - 1)) {
-			// Duplicate, overwrite existing data and return
-			trans->otype = def->value;
-			return true;
-		}
-		if (trans->otype == def->value)
-			break;
-		last = trans;
-		trans = trans->next;
-	}
-
-	if (trans == NULL) {
-		trans = (struct filename_trans_datum *)kcalloc(sizeof(*trans),
-							       1, GFP_ATOMIC);
-		struct filename_trans_key *new_key =
-			(struct filename_trans_key *)kmalloc(sizeof(*new_key),
-							     GFP_ATOMIC);
-		*new_key = key;
-		new_key->name = kstrdup(key.name, GFP_ATOMIC);
-		trans->next = last;
-		trans->otype = def->value;
-		hashtab_insert(&db->filename_trans, new_key, trans,
-			       filenametr_key_params);
-	}
-
-	db->compat_filename_trans_count++;
-	return ebitmap_set_bit(&trans->stypes, src->value - 1, 1) == 0;
-#else // < 5.7.0, has no filename_trans_key, but struct filename_trans
 
 	struct filename_trans key;
 	key.ttype = tgt->value;
@@ -610,7 +513,6 @@ static bool add_filename_trans(struct policydb *db, const char *s,
 
 	return ebitmap_set_bit(&db->filename_trans_ttypes, src->value - 1, 1) ==
 	       0;
-#endif
 }
 
 static bool add_genfscon(struct policydb *db, const char *fs_name,
@@ -651,53 +553,7 @@ static bool add_type(struct policydb *db, const char *type_name, bool attr)
 		return false;
 	}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
-	size_t new_size = sizeof(struct ebitmap) * db->p_types.nprim;
-	struct ebitmap *new_type_attr_map_array =
-		(krealloc(db->type_attr_map_array, new_size, GFP_ATOMIC));
-
-	struct type_datum **new_type_val_to_struct =
-		krealloc(db->type_val_to_struct,
-			 sizeof(*db->type_val_to_struct) * db->p_types.nprim,
-			 GFP_ATOMIC);
-
-	if (!new_type_attr_map_array) {
-		pr_err("add_type: alloc type_attr_map_array failed\n");
-		return false;
-	}
-
-	if (!new_type_val_to_struct) {
-		pr_err("add_type: alloc type_val_to_struct failed\n");
-		return false;
-	}
-
-	char **new_val_to_name_types =
-		krealloc(db->sym_val_to_name[SYM_TYPES],
-			 sizeof(char *) * db->symtab[SYM_TYPES].nprim,
-			 GFP_KERNEL);
-	if (!new_val_to_name_types) {
-		pr_err("add_type: alloc val_to_name failed\n");
-		return false;
-	}
-
-	db->type_attr_map_array = new_type_attr_map_array;
-	ebitmap_init(&db->type_attr_map_array[value - 1]);
-	ebitmap_set_bit(&db->type_attr_map_array[value - 1], value - 1, 1);
-
-	db->type_val_to_struct = new_type_val_to_struct;
-	db->type_val_to_struct[value - 1] = type;
-
-	db->sym_val_to_name[SYM_TYPES] = new_val_to_name_types;
-	db->sym_val_to_name[SYM_TYPES][value - 1] = key;
-
-	int i;
-	for (i = 0; i < db->p_roles.nprim; ++i) {
-		ebitmap_set_bit(&db->role_val_to_struct[i]->types, value - 1,
-				1);
-	}
-
-	return true;
-#elif defined(CONFIG_IS_HW_HISI)
+#if defined(CONFIG_IS_HW_HISI)
 	/*
    * Huawei use type_attr_map and type_val_to_struct.
    * And use ebitmap not flex_array.
@@ -896,9 +752,7 @@ static bool set_type_state(struct policydb *db, const char *type_name,
 static void add_typeattribute_raw(struct policydb *db, struct type_datum *type,
 				  struct type_datum *attr)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
-	struct ebitmap *sattr = &db->type_attr_map_array[type->value - 1];
-#elif defined(CONFIG_IS_HW_HISI)
+#if defined(CONFIG_IS_HW_HISI)
 	/*
    *   HISI_SELINUX_EBITMAP_RO is Huawei's unique features.
    */
