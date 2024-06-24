@@ -38,7 +38,7 @@ fun AppProfileConfig(
             checked = if (enabled) {
                 profile.umountModules
             } else {
-            	null
+            	false
             },
             enabled = enabled,
             onCheckedChange = {
