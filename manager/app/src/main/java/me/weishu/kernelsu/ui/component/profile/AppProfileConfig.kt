@@ -35,11 +35,7 @@ fun AppProfileConfig(
         SwitchItem(
             title = stringResource(R.string.profile_umount_modules),
             summary = stringResource(R.string.profile_umount_modules_summary),
-            checked = if (enabled) {
-                profile.umountModules
-            } else {
-                Natives.isDefaultUmountModules()
-            },
+            checked = false,
             enabled = enabled,
             onCheckedChange = {
                 onProfileChange(
