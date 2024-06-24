@@ -3,6 +3,14 @@ Ported by [Rissu](https://github.com/rsuntk)
 
 I personally didn't recommend this as main root method.
 
+# Compatibility
+This KernelSU have native `armeabi-v7a` support.
+
+Support non-GKI Kernel from 4.4 to 4.19.
+
+Not support GKI Kernel anymore since GKI kernel is impossible to
+have 32bit version. Support for `KPROBE` also dropped.
+
 # How to add this KernelSU
 - Latest tag (stable)
 ```sh
