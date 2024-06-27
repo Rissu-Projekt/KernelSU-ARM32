@@ -128,6 +128,10 @@ void apply_kernelsu_rules()
 	// Allow all binder transactions
 	ksu_allow(db, ALL, KERNEL_SU_DOMAIN, "binder", ALL);
 		  
+    	// Allow system server kill su process
+   	ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "getpgid");
+    	ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
+	
 	rcu_read_unlock();
 }
 
