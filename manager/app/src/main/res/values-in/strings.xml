@@ -16,7 +16,7 @@
     <string name="selinux_status_disabled">Dinonaktifkan</string>
     <string name="selinux_status_enforcing">Enforcing</string>
     <string name="selinux_status_permissive">Permissive</string>
-    <string name="selinux_status_unknown">Tidak dikenal</string>
+    <string name="selinux_status_unknown">Tidak diketahui</string>
     <string name="superuser">Akses Root</string>
     <string name="module_failed_to_enable">Gagal mengaktifkan modul: %s</string>
     <string name="module_failed_to_disable">Gagal menonaktifkan modul: %s</string>
@@ -45,7 +45,7 @@
     <string name="send_log">Laporkan Log</string>
     <string name="safe_mode">Mode aman</string>
     <string name="reboot_to_apply">Mulai ulang untuk menerapkan</string>
-    <string name="module_magisk_conflict">Modul dinonaktifkan karena bertentangan dengan Magisk!</string>
+    <string name="module_magisk_conflict">Modul dinonaktifkan karena konflik dengan Magisk!</string>
     <string name="home_learn_kernelsu">Pelajari KernelSU</string>
     <string name="home_learn_kernelsu_url">https://kernelsu.org/id_ID/guide/what-is-kernelsu.html</string>
     <string name="home_click_to_learn_kernelsu">Pelajari cara memasang KernelSU dan menggunakan modul</string>
@@ -98,6 +98,8 @@
     <string name="app_profile_template_edit">Edit Templat</string>
     <string name="app_profile_template_id">id</string>
     <string name="settings_profile_template">Template Profil Aplikasi</string>
+    <string name="settings_check_update">Cek terbaru</string>
+    <string name="settings_check_update_summary">Cek terbaru setiap membuka aplikasi</string>
     <string name="app_profile_template_description">Deskripsi</string>
     <string name="app_profile_template_save">Simpan</string>
     <string name="settings_profile_template_summary">Atur template lokal dan online Profil Aplikasi</string>

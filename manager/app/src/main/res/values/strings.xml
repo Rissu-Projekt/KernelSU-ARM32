@@ -86,6 +86,8 @@
     <string name="module_changelog">Changelog</string>
     <string name="settings_profile_template">App Profile Template</string>
     <string name="settings_profile_template_summary">Manage local and online template of App Profile</string>
+    <string name="settings_check_update">Check update</string>
+    <string name="settings_check_update_summary">Automatically check for updates when opening the app</string>
     <string name="app_profile_template_create">Create Template</string>
     <string name="app_profile_template_edit">Edit Template</string>
     <string name="app_profile_template_id">id</string>

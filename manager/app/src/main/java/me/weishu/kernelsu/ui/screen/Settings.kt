@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui.screen
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -10,6 +11,8 @@ import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.Fence
 import androidx.compose.material.icons.filled.RemoveModerator
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled.Upgrade
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -80,6 +83,23 @@ fun SettingScreen(navigator: DestinationsNavigator) {
                 if (Natives.setDefaultUmountModules(it)) {
                     umountChecked = it
                 }
+            }
+
+            val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            var checkUpdate by rememberSaveable {
+                mutableStateOf(
+                    prefs.getBoolean("check_update", true)
+                )
+            }
+
+            SwitchItem(
+                icon = Icons.Filled.Update,
+                title = stringResource(id = R.string.settings_check_update),
+                summary = stringResource(id = R.string.settings_check_update_summary),
+                checked = checkUpdate
+            ) {
+                prefs.edit().putBoolean("check_update", it).apply()
+                checkUpdate = it
             }
 
             ListItem(
