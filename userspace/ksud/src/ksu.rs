@@ -219,7 +219,7 @@ pub fn root_shell() -> Result<()> {
     if free_idx < matches.free.len() {
         let name = &matches.free[free_idx];
         uid = unsafe {
-            let pw = libc::getpwnam(name.as_ptr() as *const u8).as_ref();
+            let pw = libc::getpwnam(name.as_ptr()).as_ref();
             match pw {
                 Some(pw) => pw.pw_uid,
                 None => name.parse::<u32>().unwrap_or(0),
