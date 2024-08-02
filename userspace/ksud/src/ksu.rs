@@ -15,9 +15,7 @@ use crate::{
 };
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-use rustix::{
-    thread::{set_thread_res_gid, set_thread_res_uid, set_thread_groups, Gid, Uid}
-};
+use rustix::thread::{set_thread_res_gid, set_thread_res_uid, set_thread_groups, Gid, Uid};
 
 //
 // Rissu attempts for 32bit support
