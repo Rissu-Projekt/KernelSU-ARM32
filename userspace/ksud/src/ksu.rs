@@ -14,22 +14,23 @@ use crate::{
     utils::{self, umask},
 };
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
+use rustix::{
+    process::getuid,
+    thread::{set_thread_res_gid, set_thread_res_uid, Gid, Uid},
+};
+
 pub const KERNEL_SU_OPTION: u32 = 0xDEAD_BEEF;
 
-const CMD_GRANT_ROOT: u64 = 0;
-// const CMD_BECOME_MANAGER: u64 = 1;
-const CMD_GET_VERSION: u64 = 2;
-// const CMD_ALLOW_SU: u64 = 3;
-// const CMD_DENY_SU: u64 = 4;
-// const CMD_GET_ALLOW_LIST: u64 = 5;
-// const CMD_GET_DENY_LIST: u64 = 6;
-const CMD_REPORT_EVENT: u64 = 7;
-pub const CMD_SET_SEPOLICY: u64 = 8;
-pub const CMD_CHECK_SAFEMODE: u64 = 9;
+const CMD_GRANT_ROOT: u32 = 0;
+const CMD_GET_VERSION: u32 = 2;
+const CMD_REPORT_EVENT: u32 = 7;
+pub const CMD_SET_SEPOLICY: u32 = 8;
+pub const CMD_CHECK_SAFEMODE: u32 = 9;
 
-const EVENT_POST_FS_DATA: u64 = 1;
-const EVENT_BOOT_COMPLETED: u64 = 2;
-const EVENT_MODULE_MOUNTED: u64 = 3;
+const EVENT_POST_FS_DATA: u32 = 1;
+const EVENT_BOOT_COMPLETED: u32 = 2;
+const EVENT_MODULE_MOUNTED: u32 = 3;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
 pub fn grant_root() -> Result<()> {
@@ -61,12 +62,19 @@ fn print_usage(program: &str, opts: Options) {
 
 fn set_identity(uid: u32, gid: u32, groups: &[u32]) {
     #[cfg(any(target_os = "linux", target_os = "android"))]
-    unsafe {
-        if !groups.is_empty() {
-            libc::setgroups(groups.len(), groups.as_ptr());
-        }
-        libc::setresgid(gid, gid, gid);
-        libc::setresuid(uid, uid, uid);
+    {
+        rustix::thread::set_thread_groups(
+            groups
+                .iter()
+                .map(|g| unsafe { Gid::from_raw(*g) })
+                .collect::<Vec<_>>()
+                .as_ref(),
+        )
+        .ok();
+        let gid = unsafe { Gid::from_raw(gid) };
+        let uid = unsafe { Uid::from_raw(uid) };
+        set_thread_res_gid(gid, gid, gid).ok();
+        set_thread_res_uid(uid, uid, uid).ok();
     }
 }
 
@@ -207,10 +215,8 @@ pub fn root_shell() -> Result<()> {
     if free_idx < matches.free.len() {
         let name = &matches.free[free_idx];
         uid = unsafe {
-            #[cfg(target_arch = "aarch64")]
-            let pw = libc::getpwnam(name.as_ptr() as *const u8).as_ref();
-            #[cfg(target_arch = "x86_64")]
-            let pw = libc::getpwnam(name.as_ptr() as *const i8).as_ref();
+        	// allow compilation for arm32
+            let pw = libc::getpwnam(name.as_ptr()).as_ref();
 
             match pw {
                 Some(pw) => pw.pw_uid,
@@ -305,7 +311,7 @@ pub fn get_version() -> i32 {
     result
 }
 
-fn report_event(event: u64) {
+fn report_event(event: u32) {
     #[cfg(any(target_os = "linux", target_os = "android"))]
     unsafe {
         #[allow(clippy::cast_possible_wrap)]

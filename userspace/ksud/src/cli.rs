@@ -49,40 +49,6 @@ enum Commands {
         command: Profile,
     },
 
-    /// Patch boot or init_boot images to apply KernelSU
-    BootPatch {
-        /// boot image path, if not specified, will try to find the boot image automatically
-        #[arg(short, long)]
-        boot: Option<PathBuf>,
-
-        /// kernel image path to replace
-        #[arg(short, long)]
-        kernel: Option<PathBuf>,
-
-        /// LKM module path to replace
-        #[arg(short, long, requires("init"))]
-        module: Option<PathBuf>,
-
-        /// init to be replaced, if use LKM, this must be specified
-        #[arg(short, long, requires("module"))]
-        init: Option<PathBuf>,
-
-        /// will use another slot when boot image is not specified
-        #[arg(short = 'u', long, default_value = "false")]
-        ota: bool,
-
-        /// Flash it to boot partition after patch
-        #[arg(short, long, default_value = "false")]
-        flash: bool,
-
-        /// output path, if not specified, will use current directory
-        #[arg(short, long, default_value = None)]
-        out: Option<PathBuf>,
-
-        /// magiskboot path, if not specified, will use builtin one
-        #[arg(long, default_value = None)]
-        magiskboot: Option<PathBuf>,
-    },
     /// For developers
     Debug {
         #[command(subcommand)]
@@ -279,17 +245,6 @@ pub fn run() -> Result<()> {
             Debug::Mount => event::mount_systemlessly(defs::MODULE_DIR),
             Debug::Test => todo!(),
         },
-
-        Commands::BootPatch {
-            boot,
-            init,
-            kernel,
-            module,
-            ota,
-            flash,
-            out,
-            magiskboot,
-        } => crate::boot_patch::patch(boot, kernel, module, init, ota, flash, out, magiskboot),
     };
 
     if let Err(e) = &result {

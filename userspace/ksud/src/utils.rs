@@ -161,7 +161,7 @@ pub fn switch_cgroups() {
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
 pub fn umask(mask: u32) {
-    unsafe { libc::umask(mask) };
+    process::umask(rustix::fs::Mode::from_raw_mode(mask));
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "android")))]
