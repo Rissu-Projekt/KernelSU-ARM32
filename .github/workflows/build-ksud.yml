@@ -17,9 +17,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: aarch64-linux-android
-          - target: x86_64-linux-android
-          - target: x86_64-pc-windows-gnu # only for build
+          - target: armv7-linux-androideabi
     uses: ./.github/workflows/ksud.yml
     with:
       target: ${{ matrix.target }}
