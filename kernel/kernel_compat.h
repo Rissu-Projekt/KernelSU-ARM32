@@ -5,6 +5,11 @@
 #include <linux/key.h>
 #include <linux/version.h>
 
+// KPROBE compats
+#ifdef CONFIG_KPROBES
+#error "Compilation aborted, cannot works with CONFIG_KPROBES, please disable it!"
+#endif
+
 extern long ksu_strncpy_from_user_nofault(char *dst,
 					  const void __user *unsafe_addr,
 					  long count);

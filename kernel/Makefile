@@ -1,26 +1,12 @@
-ifeq ($(CONFIG_KPROBE),y)
-$(error CONFIG_KPROBE turned on! Please turn it off and patch your kernel with hook method.)
-endif
-
 ccflags-y := -I$(srctree)/security/selinux -I$(srctree)/security/selinux/include
 ccflags-y += -I$(objtree)/security/selinux -include $(srctree)/include/uapi/asm-generic/errno.h
 
 ifeq ($(shell grep -q " current_sid(void)" $(srctree)/security/selinux/include/objsec.h; echo $$?),0)
-$(info -- Kernel has current_sid)
 ccflags-y += -DKSU_COMPAT_HAS_CURRENT_SID
 endif
 
 ifeq ($(shell grep -q "struct selinux_state " $(srctree)/security/selinux/include/security.h; echo $$?),0)
-$(info -- Kernel has selinux_state)
 ccflags-y += -DKSU_COMPAT_HAS_SELINUX_STATE
-endif
-
-# 4.4 kernel
-ifeq ($(shell grep -q "pts_inode->i_rdev" $(srctree)/fs/devpts/inode.c; echo $$?),0)
-$(info -- Kernel use pts_inode as struct)
-ccflags-y += -DKSU_COMPAT_DEVPTS_PRIV_HAS_PTS_INODE
-else
-$(info -- Kernel use dentry as struct)
 endif
 
 kernelsu-objs := ksu.o allowlist.o apk_sign.o	\

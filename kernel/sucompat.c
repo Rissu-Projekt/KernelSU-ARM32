@@ -131,7 +131,8 @@ int ksu_handle_devpts(struct inode *inode)
 		return 0;
 
 	if (ksu_devpts_sid) {
-#ifdef KSU_COMPAT_DEVPTS_PRIV_HAS_PTS_INODE
+/* Quick info: before 4.6-rc5, devpts_get_priv use pts_inode as struct. The patch is slightly changed. and Untested. */
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(4, 5, 0)
 		struct inode_security_struct *sec =
 			(struct inode_security_struct *)inode;
 #else
