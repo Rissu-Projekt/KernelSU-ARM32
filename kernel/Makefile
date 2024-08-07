@@ -1,17 +1,35 @@
-obj-y += ksu.o
-obj-y += allowlist.o
-kernelsu-objs := apk_sign.o
-obj-y += kernelsu.o
-obj-y += module_api.o
-obj-y += sucompat.o
-obj-y += uid_observer.o
-obj-y += manager.o
-obj-y += core_hook.o
-obj-y += ksud.o
-obj-y += embed_ksud.o
-obj-y += kernel_compat.o
+ifeq ($(CONFIG_KPROBE),y)
+$(error CONFIG_KPROBE turned on! Please turn it off and patch your kernel with hook method.)
+endif
 
-obj-y += selinux/
+ccflags-y := -I$(srctree)/security/selinux -I$(srctree)/security/selinux/include
+ccflags-y += -I$(objtree)/security/selinux -include $(srctree)/include/uapi/asm-generic/errno.h
+
+ifeq ($(shell grep -q " current_sid(void)" $(srctree)/security/selinux/include/objsec.h; echo $$?),0)
+$(info -- Kernel has current_sid)
+ccflags-y += -DKSU_COMPAT_HAS_CURRENT_SID
+endif
+
+ifeq ($(shell grep -q "struct selinux_state " $(srctree)/security/selinux/include/security.h; echo $$?),0)
+$(info -- Kernel has selinux_state)
+ccflags-y += -DKSU_COMPAT_HAS_SELINUX_STATE
+endif
+
+# 4.4 kernel
+ifeq ($(shell grep -q "pts_inode->i_rdev" $(srctree)/fs/devpts/inode.c; echo $$?),0)
+$(info -- Kernel use pts_inode as struct)
+ccflags-y += -DKSU_COMPAT_DEVPTS_PRIV_HAS_PTS_INODE
+else
+$(info -- Kernel use dentry as struct)
+endif
+
+kernelsu-objs := ksu.o allowlist.o apk_sign.o	\
+				sucompat.o throne_tracker.o	\
+				core_hook.o ksud.o	\
+				embed_ksud.o kernel_compat.o
+
+kernelsu-objs += selinux/rules.o selinux/selinux.o selinux/sepolicy.o
+
 # .git is a text file while the module is imported by 'git submodule add'.
 ifeq ($(shell test -e $(srctree)/$(src)/../.git; echo $$?),0)
 KSU_GIT_VERSION := $(shell cd $(srctree)/$(src); /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin git rev-list --count HEAD)
@@ -25,11 +43,11 @@ ccflags-y += -DKSU_VERSION=16
 endif
 
 ifndef KSU_EXPECTED_SIZE
-KSU_EXPECTED_SIZE := 0x033b
+KSU_EXPECTED_SIZE := 0x38b
 endif
 
 ifndef KSU_EXPECTED_HASH
-KSU_EXPECTED_HASH := c371061b19d8c7d7d6133c6a9bafe198fa944e50c1b31c9d8daa8d7f1fc2d2d6
+KSU_EXPECTED_HASH := 98d31e655e6668f593e1deb2e17d2d2144d25f44d071fe1a98b1b6af2a785f37
 endif
 
 ifdef KSU_MANAGER_PACKAGE
@@ -42,5 +60,16 @@ $(info -- KernelSU Manager signature hash: $(KSU_EXPECTED_HASH))
 
 ccflags-y += -DEXPECTED_SIZE=$(KSU_EXPECTED_SIZE)
 ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
+
+ifeq ($(shell grep -q "int path_umount" $(srctree)/fs/namespace.c; echo $$?),0)
+ccflags-y += -DKSU_NONGKI_UMOUNT
+else
+$(info -- Did you know you can backport path_umount to fs/namespace.c from 5.9?)
+$(info -- Read: https://kernelsu.org/guide/how-to-integrate-for-non-gki.html#how-to-backport-path-umount)
+endif
+
 ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
-ccflags-y += -Wno-declaration-after-statement
+ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
+
+# compile it as one
+obj-$(CONFIG_KSU) += kernelsu.o

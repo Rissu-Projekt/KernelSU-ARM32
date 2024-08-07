@@ -1,12 +1,14 @@
 #include "selinux.h"
 #include "objsec.h"
-#include "linux/version.h"
+#include <linux/version.h>
 #include "../klog.h" // IWYU pragma: keep
 #ifndef KSU_COMPAT_USE_SELINUX_STATE
 #include "avc.h"
 #endif
 
-#define KERNEL_SU_DOMAIN "u:r:su:s0"
+#define KERNEL_SU_DOMAIN 	"u:r:su:s0"
+#define ZYGOTE_DOMAIN		"u:r:zygote:s0"
+#define DEVPTS_DOMAIN 		"u:object_r:ksu_file:s0"
 
 static int transive_to_domain(const char *domain)
 {
@@ -126,7 +128,18 @@ bool is_zygote(void *sec)
 	if (err) {
 		return false;
 	}
-	result = strncmp("u:r:zygote:s0", domain, seclen) == 0;
+	result = strncmp(ZYGOTE_DOMAIN, domain, seclen) == 0;
 	security_release_secctx(domain, seclen);
 	return result;
+}
+
+u32 ksu_get_devpts_sid()
+{
+	u32 devpts_sid = 0;
+	int err = security_secctx_to_secid(DEVPTS_DOMAIN, strlen(DEVPTS_DOMAIN),
+					   &devpts_sid);
+	if (err) {
+		pr_info("get devpts sid err %d\n", err);
+	}
+	return devpts_sid;
 }
