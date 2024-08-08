@@ -240,7 +240,7 @@ pub fn run() -> Result<()> {
                 println!("Kernel Version: {}", ksucalls::get_version());
                 Ok(())
             }
-            Debug::Su => crate::ksu::grant_root(),
+            Debug::Su { global_mnt } => crate::su::grant_root(global_mnt),
             Debug::Mount => event::mount_systemlessly(defs::MODULE_DIR),
             Debug::Test => todo!(),
         },
