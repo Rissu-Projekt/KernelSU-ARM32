@@ -5,7 +5,7 @@ use std::{collections::HashMap, path::Path};
 
 use crate::module::prune_modules;
 use crate::{
-    assets, defs, mount, restorecon,
+    assets, defs, mount, ksucalls, restorecon,
     utils::{self, ensure_clean_dir, ensure_dir_exists},
 };
 
@@ -90,8 +90,7 @@ pub fn mount_systemlessly(module_dir: &str) -> Result<()> {
 }
 
 pub fn on_post_data_fs() -> Result<()> {
-    crate::ksu::report_post_fs_data();
-
+    ksucalls::report_post_fs_data();
     utils::umask(0);
 
     #[cfg(unix)]
@@ -153,7 +152,7 @@ pub fn on_post_data_fs() -> Result<()> {
         .with_context(|| "mount module image failed".to_string())?;
 
     // tell kernel that we've mount the module, so that it can do some optimization
-    crate::ksu::report_module_mounted();
+    ksucalls::report_module_mounted();
 
     // if we are in safe mode, we should disable all modules
     if safe_mode {
@@ -238,7 +237,7 @@ pub fn on_services() -> Result<()> {
 }
 
 pub fn on_boot_completed() -> Result<()> {
-    crate::ksu::report_boot_complete();
+    ksucalls::report_boot_complete();
     info!("on_boot_completed triggered!");
     let module_update_img = Path::new(defs::MODULE_UPDATE_IMG);
     let module_img = Path::new(defs::MODULE_IMG);

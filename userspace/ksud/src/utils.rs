@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use crate::defs;
+use crate::{defs, ksucalls};
 use std::fs::metadata;
 #[allow(unused_imports)]
 use std::fs::{set_permissions, Permissions};
@@ -100,7 +100,7 @@ pub fn is_safe_mode() -> bool {
     if safemode {
         return true;
     }
-    let safemode = crate::ksu::check_kernel_safemode();
+    let safemode = ksucalls::check_kernel_safemode();
     log::info!("kernel_safemode: {}", safemode);
     safemode
 }

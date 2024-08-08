@@ -1,7 +1,4 @@
 use anyhow::{Ok, Result};
-
-#[cfg(unix)]
-use anyhow::ensure;
 use getopts::Options;
 use std::env;
 #[cfg(unix)]
@@ -20,20 +17,11 @@ use rustix::{
     thread::{set_thread_res_gid, set_thread_res_uid, Gid, Uid},
 };
 
-pub const KERNEL_SU_OPTION: u32 = 0xDEAD_BEEF;
-
-const CMD_GRANT_ROOT: u32 = 0;
-const CMD_GET_VERSION: u32 = 2;
-const CMD_REPORT_EVENT: u32 = 7;
-pub const CMD_SET_SEPOLICY: u32 = 8;
-pub const CMD_CHECK_SAFEMODE: u32 = 9;
-
-const EVENT_POST_FS_DATA: u32 = 1;
-const EVENT_BOOT_COMPLETED: u32 = 2;
-const EVENT_MODULE_MOUNTED: u32 = 3;
-
 #[cfg(any(target_os = "linux", target_os = "android"))]
-pub fn grant_root() -> Result<()> {
+pub fn grant_root(global_mnt: bool) -> Result<()> {
+    const KERNEL_SU_OPTION: u32 = 0xDEAD_BEEF;
+    const CMD_GRANT_ROOT: u32 = 0;
+
     let mut result: u32 = 0;
     unsafe {
         #[allow(clippy::cast_possible_wrap)]
@@ -46,12 +34,25 @@ pub fn grant_root() -> Result<()> {
         );
     }
 
-    ensure!(result == KERNEL_SU_OPTION, "grant root failed");
-    Err(std::process::Command::new("sh").exec().into())
+    anyhow::ensure!(result == KERNEL_SU_OPTION, "grant root failed");
+    let mut command = std::process::Command::new("sh");
+    let command = unsafe {
+        command.pre_exec(move || {
+            if global_mnt {
+                let _ = utils::switch_mnt_ns(1);
+                let _ = utils::unshare_mnt_ns();
+            }
+            std::result::Result::Ok(())
+        })
+    };
+    // add /data/adb/ksu/bin to PATH
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    add_path_to_env(defs::BINARY_DIR)?;
+    Err(command.exec().into())
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "android")))]
-pub fn grant_root() -> Result<()> {
+pub fn grant_root(_global_mnt: bool) -> Result<()> {
     unimplemented!("grant_root is only available on android");
 }
 
@@ -83,7 +84,7 @@ pub fn root_shell() -> Result<()> {
     unimplemented!()
 }
 
-#[cfg(unix)]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 pub fn root_shell() -> Result<()> {
     // we are root now, this was set in kernel!
 
@@ -295,58 +296,4 @@ fn add_path_to_env(path: &str) -> Result<()> {
     let new_path_env = env::join_paths(paths)?;
     env::set_var("PATH", new_path_env);
     Ok(())
-}
-
-pub fn get_version() -> i32 {
-    let mut result: i32 = 0;
-    #[cfg(any(target_os = "linux", target_os = "android"))]
-    unsafe {
-        #[allow(clippy::cast_possible_wrap)]
-        libc::prctl(
-            KERNEL_SU_OPTION as i32, // supposed to overflow
-            CMD_GET_VERSION,
-            std::ptr::addr_of_mut!(result).cast::<libc::c_void>(),
-        );
-    }
-    result
-}
-
-fn report_event(event: u32) {
-    #[cfg(any(target_os = "linux", target_os = "android"))]
-    unsafe {
-        #[allow(clippy::cast_possible_wrap)]
-        libc::prctl(
-            KERNEL_SU_OPTION as i32, // supposed to overflow
-            CMD_REPORT_EVENT,
-            event,
-        );
-    }
-}
-
-pub fn check_kernel_safemode() -> bool {
-    let mut result: i32 = 0;
-    #[cfg(any(target_os = "linux", target_os = "android"))]
-    unsafe {
-        #[allow(clippy::cast_possible_wrap)]
-        libc::prctl(
-            KERNEL_SU_OPTION as i32, // supposed to overflow
-            CMD_CHECK_SAFEMODE,
-            0,
-            0,
-            std::ptr::addr_of_mut!(result).cast::<libc::c_void>(),
-        );
-    }
-    result == KERNEL_SU_OPTION as i32
-}
-
-pub fn report_post_fs_data() {
-    report_event(EVENT_POST_FS_DATA);
-}
-
-pub fn report_boot_complete() {
-    report_event(EVENT_BOOT_COMPLETED);
-}
-
-pub fn report_module_mounted() {
-    report_event(EVENT_MODULE_MOUNTED);
 }

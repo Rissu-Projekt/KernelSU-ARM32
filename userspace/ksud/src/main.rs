@@ -5,6 +5,7 @@ mod debug;
 mod defs;
 mod event;
 mod ksu;
+mod ksucalls;
 mod module;
 mod mount;
 mod profile;

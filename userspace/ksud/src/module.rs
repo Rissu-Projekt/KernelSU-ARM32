@@ -1,7 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use crate::utils::*;
 use crate::{
-    assets, defs, mount,
+    assets, defs, ksucalls, mount,
     restorecon::{restore_syscon, setsyscon},
     sepolicy,
 };
@@ -51,7 +51,7 @@ fn exec_install_script(module_file: &str) -> Result<()> {
             ),
         )
         .env("KSU", "true")
-        .env("KSU_KERNEL_VER_CODE", crate::ksu::get_version().to_string())
+        .env("KSU_KERNEL_VER_CODE", ksucalls::get_version().to_string())
         .env("KSU_VER", defs::VERSION_NAME)
         .env("KSU_VER_CODE", defs::VERSION_CODE)
         .env("OUTFD", "1")
@@ -220,7 +220,7 @@ fn exec_script<T: AsRef<Path>>(path: T, wait: bool) -> Result<()> {
         .arg(path.as_ref())
         .env("ASH_STANDALONE", "1")
         .env("KSU", "true")
-        .env("KSU_KERNEL_VER_CODE", crate::ksu::get_version().to_string())
+        .env("KSU_KERNEL_VER_CODE", ksucalls::get_version().to_string())
         .env("KSU_VER_CODE", defs::VERSION_CODE)
         .env("KSU_VER", defs::VERSION_NAME)
         .env(

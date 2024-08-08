@@ -6,7 +6,7 @@ use android_logger::Config;
 #[cfg(target_os = "android")]
 use log::LevelFilter;
 
-use crate::{apk_sign, debug, defs, event, module, utils};
+use crate::{apk_sign, debug, defs, ksucalls, event, module, utils};
 
 /// KernelSU userspace cli
 #[derive(Parser, Debug)]
@@ -237,7 +237,7 @@ pub fn run() -> Result<()> {
                 Ok(())
             }
             Debug::Version => {
-                println!("Kernel Version: {}", crate::ksu::get_version());
+                println!("Kernel Version: {}", ksucalls::get_version());
                 Ok(())
             }
             Debug::Su => crate::ksu::grant_root(),
