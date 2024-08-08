@@ -70,7 +70,11 @@ enum Debug {
     },
 
     /// Root Shell
-    Su,
+    Su {
+        /// switch to gloabl mount namespace
+        #[arg(short, long, default_value = "false")]
+        global_mnt: bool,
+    },
 
     /// Get kernel version
     Version,
@@ -240,7 +244,7 @@ pub fn run() -> Result<()> {
                 println!("Kernel Version: {}", ksucalls::get_version());
                 Ok(())
             }
-            Debug::Su { global_mnt } => crate::su::grant_root(global_mnt),
+            Debug::Su { global_mnt } => crate::ksu::grant_root(global_mnt),
             Debug::Mount => event::mount_systemlessly(defs::MODULE_DIR),
             Debug::Test => todo!(),
         },
