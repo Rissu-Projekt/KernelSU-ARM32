@@ -25,20 +25,36 @@ private fun getKsuDaemonPath(): String {
 
 object KsuCli {
     val SHELL: Shell = createRootShell()
+    val GLOBAL_MNT_SHELL: Shell = createRootShell(true)
 }
 
-fun getRootShell(): Shell {
-    return KsuCli.SHELL
+fun getRootShell(globalMnt: Boolean = false): Shell {
+    return if (globalMnt) KsuCli.GLOBAL_MNT_SHELL else {
+        KsuCli.SHELL
+    }
 }
 
-fun createRootShell(): Shell {
+fun createRootShell(globalMnt: Boolean = false): Shell {
     Shell.enableVerboseLogging = BuildConfig.DEBUG
     val builder = Shell.Builder.create()
     return try {
-        builder.build(getKsuDaemonPath(), "debug", "su")
+        if (globalMnt) {
+            builder.build(getKsuDaemonPath(), "debug", "su", "-g")
+        } else {
+            builder.build(getKsuDaemonPath(), "debug", "su")
+        }
     } catch (e: Throwable) {
-        Log.e(TAG, "su failed: ", e)
-        builder.build("sh")
+        Log.w(TAG, "ksu failed: ", e)
+        try {
+            if (globalMnt) {
+                builder.build("su")
+            } else {
+                builder.build("su", "-mm")
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "su failed: ", e)
+            builder.build("sh")
+        }
     }
 }
 
@@ -219,7 +235,9 @@ fun launchApp(packageName: String) {
 
     val shell = getRootShell()
     val result =
-        shell.newJob().add("monkey -p $packageName -c android.intent.category.LAUNCHER 1").exec()
+        shell.newJob()
+            .add("cmd package resolve-activity --brief $packageName | tail -n 1 | xargs cmd activity start-activity -n")
+            .exec()
     Log.i(TAG, "launch $packageName result: $result")
 }
 
