@@ -1,13 +1,11 @@
+# KernelSU on Arm32
 
-**English** | [Español](README_ES.md) | [简体中文](README_CN.md) | [繁體中文](README_TW.md) | [日本語](README_JP.md) | [Polski](README_PL.md) | [Portuguese-Brazil](README_PT-BR.md) | [Türkçe](README_TR.md) | [Русский](README_RU.md) | [Tiếng Việt](README_VI.md) | [Indonesia](README_ID.md) | [עברית](README_iw.md) | [हिंदी](README_IN.md)
+> [!WARNING]
+> This KernelSU is not yet stable! I don't recommend it as main root method!
 
-# KernelSU
+![KernelSU banner](https://github.com/rsuntk/rsuntk/blob/main/ksu_banner.png)
 
-<img src="https://kernelsu.org/logo.png" style="width: 96px;" alt="logo">
-
-A Kernel-based root solution for Android devices.
-
-[![latest release badge](https://img.shields.io/github/v/release/tiann/KernelSU?label=Release&logo=github)](https://github.com/tiann/KernelSU/releases/latest)
+[![latest release badge](https://img.shields.io/github/v/release/Rissu-Projekt/KernelSU-ARM32?label=Release&logo=github)](https://github.com/tiann/KernelSU/releases/latest)
 [![weblate](https://img.shields.io/badge/Localization-Weblate-teal?logo=weblate)](https://hosted.weblate.org/engage/kernelsu)
 [![Channel](https://img.shields.io/badge/Follow-Telegram-blue.svg?logo=telegram)](https://t.me/KernelSU)
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-orange.svg?logo=gnu)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
@@ -22,21 +20,27 @@ A Kernel-based root solution for Android devices.
 
 ## Compatibility State
 
-KernelSU officially supports Android GKI 2.0 devices (kernel 5.10+). Older kernels (4.14+) are also compatible, but the kernel will have to be built manually.
+### Kernel compatibility
+- `KPROBES` support on this KernelSU already removed.
+- Support non-GKI kernel from 4.4 to 4.19
 
-With this, WSA, ChromeOS, and container-based Android are all supported.
+### Module compatibility
+- ZygiskOnKernelSU support currently in stale position. Previously it was working fine.
+- Doesn't support ZygiskNext.
 
-Currently, only `arm64-v8a` and `x86_64` are supported.
+### Manager compatibility
+- Have `armeabi-v7a` or Arm32 support
 
+## Known issue
+- Certain apps may crash while using umount module. Disable it to fix it.
+- Opening profile template screen can crash the Manager.
+- SEPolicy related issue.
+  
 ## Usage
 
 - [Installation Instruction](https://kernelsu.org/guide/installation.html)
 - [How to build?](https://kernelsu.org/guide/how-to-build.html)
 - [Official Website](https://kernelsu.org/)
-
-## Translation
-
-To help translate KernelSU or improve existing translations, please use [Weblate](https://hosted.weblate.org/engage/kernelsu/). PR of Manager's translation is no longer accepted, because it will conflict with Weblate.
 
 ## Discussion
 
@@ -52,7 +56,5 @@ For information on reporting security vulnerabilities in KernelSU, see [SECURITY
 
 ## Credits
 
-- [kernel-assisted-superuser](https://git.zx2c4.com/kernel-assisted-superuser/about/): the KernelSU idea.
-- [Magisk](https://github.com/topjohnwu/Magisk): the powerful root tool.
-- [genuine](https://github.com/brevent/genuine/): apk v2 signature validation.
-- [Diamorphine](https://github.com/m0nad/Diamorphine): some rootkit skills.
+- [tiann](https://github.com/tiann) - Original KernelSU author, owner, and maintainer
+- [KernelSU](https://github.com/tiann/KernelSU) - Official KernelSU repository
