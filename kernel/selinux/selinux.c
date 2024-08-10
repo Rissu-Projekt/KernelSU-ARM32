@@ -45,13 +45,6 @@ void setup_selinux(const char *domain)
 		pr_err("transive domain failed.\n");
 		return;
 	}
-
-	/* we didn't need this now, we have change selinux rules when boot!
-if (!is_domain_permissive) {
-  if (set_domain_permissive() == 0) {
-      is_domain_permissive = true;
-  }
-}*/
 }
 
 void setenforce(bool enforce)
@@ -88,8 +81,7 @@ bool getenforce()
 #endif
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 10, 0)) &&                         \
-	!defined(KSU_COMPAT_HAS_CURRENT_SID)
+#ifndef KSU_COMPAT_HAS_CURRENT_SID
 /*
  * get the subjective security ID of the current task
  */

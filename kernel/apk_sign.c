@@ -8,11 +8,7 @@
 #include <linux/moduleparam.h>
 #endif
 #include <crypto/hash.h>
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
-#include <crypto/sha2.h>
-#else
 #include <crypto/sha.h>
-#endif
 
 #include "apk_sign.h"
 #include "klog.h" // IWYU pragma: keep
