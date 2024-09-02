@@ -35,7 +35,6 @@ import kotlinx.coroutines.withContext
 import me.weishu.kernelsu.*
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.rememberConfirmDialog
-import me.weishu.kernelsu.ui.screen.destinations.InstallScreenDestination
 import me.weishu.kernelsu.ui.screen.destinations.SettingScreenDestination
 import me.weishu.kernelsu.ui.util.*
 import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
@@ -44,13 +43,9 @@ import me.weishu.kernelsu.ui.util.module.LatestVersionInfo
 @Destination
 @Composable
 fun HomeScreen(navigator: DestinationsNavigator) {
-    val kernelVersion = getKernelVersion()
-
     Scaffold(topBar = {
-        TopBar(kernelVersion, onSettingsClick = {
+        TopBar(onSettingsClick = {
             navigator.navigate(SettingScreenDestination)
-        }, onInstallClick = {
-            navigator.navigate(InstallScreenDestination)
         })
     }) { innerPadding ->
         Column(
@@ -61,24 +56,10 @@ fun HomeScreen(navigator: DestinationsNavigator) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             val isManager = Natives.becomeManager(ksuApp.packageName)
-            SideEffect {
-                if (isManager) install()
-            }
             val ksuVersion = if (isManager) Natives.version else null
-            val lkmMode = ksuVersion?.let {
-                if (it >= Natives.MINIMAL_SUPPORTED_KERNEL_LKM && kernelVersion.isGKI()) Natives.isLkmMode else null
-            }
+            val kernelVersion = getKernelVersion()
 
-            StatusCard(kernelVersion, ksuVersion, lkmMode) {
-                navigator.navigate(InstallScreenDestination)
-            }
-            if (isManager && Natives.requireNewKernel()) {
-                WarningCard(
-                    stringResource(id = R.string.require_kernel_version).format(
-                        ksuVersion, Natives.MINIMAL_SUPPORTED_KERNEL
-                    )
-                )
-            }
+            StatusCard(kernelVersion, ksuVersion)
             if (ksuVersion != null && !rootAvailable()) {
                 WarningCard(
                     stringResource(id = R.string.grant_root_failed)
@@ -153,21 +134,8 @@ fun RebootDropdownItem(@StringRes id: Int, reason: String = "") {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(
-    kernelVersion: KernelVersion,
-    onInstallClick: () -> Unit,
-    onSettingsClick: () -> Unit
-) {
+private fun TopBar(onSettingsClick: () -> Unit) {
     TopAppBar(title = { Text(stringResource(R.string.app_name)) }, actions = {
-        if (kernelVersion.isGKI()) {
-            IconButton(onClick = onInstallClick) {
-                Icon(
-                    imageVector = Icons.Filled.Archive,
-                    contentDescription = stringResource(id = R.string.install)
-                )
-            }
-        }
-
         var showDropdown by remember { mutableStateOf(false) }
         IconButton(onClick = {
             showDropdown = true
@@ -205,12 +173,7 @@ private fun TopBar(
 }
 
 @Composable
-private fun StatusCard(
-    kernelVersion: KernelVersion,
-    ksuVersion: Int?,
-    lkmMode: Boolean?,
-    onClickInstall: () -> Unit = {}
-) {
+private fun StatusCard(kernelVersion: KernelVersion, ksuVersion: Int?) {
     ElevatedCard(
         colors = CardDefaults.elevatedCardColors(containerColor = run {
             if (ksuVersion != null) MaterialTheme.colorScheme.secondaryContainer
@@ -219,11 +182,6 @@ private fun StatusCard(
     ) {
         Row(modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                if (kernelVersion.isGKI()) {
-                    onClickInstall()
-                }
-            }
             .padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
             when {
                 ksuVersion != null -> {
@@ -232,14 +190,8 @@ private fun StatusCard(
                         else -> ""
                     }
 
-                    val workingMode = when (lkmMode) {
-                        null -> ""
-                        true -> " <LKM>"
-                        else -> " <GKI>"
-                    }
-
                     val workingText =
-                        "${stringResource(id = R.string.home_working)}$workingMode$safeMode"
+                        "${stringResource(id = R.string.home_working)}$safeMode"
 
                     Icon(Icons.Outlined.CheckCircle, stringResource(R.string.home_working))
                     Column(Modifier.padding(start = 20.dp)) {
@@ -393,7 +345,7 @@ private fun InfoCard() {
             @Composable
             fun InfoCardItem(label: String, content: String) {
                 contents.appendLine(label).appendLine(content).appendLine()
-                Text(text = label, style = MaterialTheme.typography.bodyLarge)
+                Text(text = label, style = MaterialTheme.typography.titleMedium)
                 Text(text = content, style = MaterialTheme.typography.bodyMedium)
             }
 
@@ -424,10 +376,10 @@ fun getManagerVersion(context: Context): Pair<String, Int> {
 @Composable
 private fun StatusCardPreview() {
     Column {
-        StatusCard(KernelVersion(5, 10, 101), 1, null)
-        StatusCard(KernelVersion(5, 10, 101), 20000, true)
-        StatusCard(KernelVersion(5, 10, 101), null, true)
-        StatusCard(KernelVersion(4, 10, 101), null, false)
+        StatusCard(KernelVersion(5, 10, 101), 1)
+        StatusCard(KernelVersion(5, 10, 101), 20000)
+        StatusCard(KernelVersion(5, 10, 101), null)
+        StatusCard(KernelVersion(4, 10, 101), null)
     }
 }
 

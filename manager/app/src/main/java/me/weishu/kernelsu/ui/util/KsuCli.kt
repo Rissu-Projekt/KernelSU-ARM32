@@ -98,13 +98,6 @@ fun execKsud(args: String, newShell: Boolean = false): Boolean {
     }
 }
 
-fun install() {
-    val start = SystemClock.elapsedRealtime()
-    val magiskboot = File(ksuApp.applicationInfo.nativeLibraryDir, "libmagiskboot.so").absolutePath
-    val result = execKsud("install --magiskboot $magiskboot", true)
-    Log.w(TAG, "install result: $result, cost: ${SystemClock.elapsedRealtime() - start}ms")
-}
-
 fun listModules(): String {
     val shell = getRootShell()
 
@@ -189,109 +182,6 @@ fun flashModule(
     }
 }
 
-fun restoreBoot(
-    onFinish: (Boolean, Int) -> Unit, onStdout: (String) -> Unit, onStderr: (String) -> Unit
-): Boolean {
-    val magiskboot = File(ksuApp.applicationInfo.nativeLibraryDir, "libmagiskboot.so")
-    val result = flashWithIO("${getKsuDaemonPath()} boot-restore -f --magiskboot $magiskboot", onStdout, onStderr)
-    onFinish(result.isSuccess, result.code)
-    return result.isSuccess
-}
-
-fun uninstallPermanently(
-    onFinish: (Boolean, Int) -> Unit, onStdout: (String) -> Unit, onStderr: (String) -> Unit
-): Boolean {
-    val magiskboot = File(ksuApp.applicationInfo.nativeLibraryDir, "libmagiskboot.so")
-    val result = flashWithIO("${getKsuDaemonPath()} uninstall --magiskboot $magiskboot", onStdout, onStderr)
-    onFinish(result.isSuccess, result.code)
-    return result.isSuccess
-}
-
-suspend fun shrinkModules(): Boolean = withContext(Dispatchers.IO) {
-    execKsud("module shrink", true)
-}
-
-@Parcelize
-sealed class LkmSelection : Parcelable {
-    data class LkmUri(val uri: Uri) : LkmSelection()
-    data class KmiString(val value: String) : LkmSelection()
-    data object KmiNone : LkmSelection()
-}
-
-fun installBoot(
-    bootUri: Uri?,
-    lkm: LkmSelection,
-    ota: Boolean,
-    onFinish: (Boolean, Int) -> Unit,
-    onStdout: (String) -> Unit,
-    onStderr: (String) -> Unit,
-): Boolean {
-    val resolver = ksuApp.contentResolver
-
-    val bootFile = bootUri?.let { uri ->
-        with(resolver.openInputStream(uri)) {
-            val bootFile = File(ksuApp.cacheDir, "boot.img")
-            bootFile.outputStream().use { output ->
-                this?.copyTo(output)
-            }
-
-            bootFile
-        }
-    }
-
-    val magiskboot = File(ksuApp.applicationInfo.nativeLibraryDir, "libmagiskboot.so")
-    var cmd = "boot-patch --magiskboot ${magiskboot.absolutePath}"
-
-    cmd += if (bootFile == null) {
-        // no boot.img, use -f to force install
-        " -f"
-    } else {
-        " -b ${bootFile.absolutePath}"
-    }
-
-    if (ota) {
-        cmd += " -u"
-    }
-
-    var lkmFile: File? = null
-    when (lkm) {
-        is LkmSelection.LkmUri -> {
-            lkmFile = with(resolver.openInputStream(lkm.uri)) {
-                val file = File(ksuApp.cacheDir, "kernelsu-tmp-lkm.ko")
-                file.outputStream().use { output ->
-                    this?.copyTo(output)
-                }
-
-                file
-            }
-            cmd += " -m ${lkmFile.absolutePath}"
-        }
-
-        is LkmSelection.KmiString -> {
-            cmd += " --kmi ${lkm.value}"
-        }
-
-        LkmSelection.KmiNone -> {
-            // do nothing
-        }
-    }
-
-    // output dir
-    val downloadsDir =
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-    cmd += " -o $downloadsDir"
-
-    val result = flashWithIO("${getKsuDaemonPath()} $cmd", onStdout, onStderr)
-    Log.i("KernelSU", "install boot result: ${result.isSuccess}")
-
-    bootFile?.delete()
-    lkmFile?.delete()
-
-    // if boot uri is empty, it is direct install, when success, we should show reboot button
-    onFinish(bootUri == null && result.isSuccess, result.code)
-    return result.isSuccess
-}
-
 fun reboot(reason: String = "") {
     val shell = getRootShell()
     if (reason == "recovery") {
@@ -304,39 +194,6 @@ fun reboot(reason: String = "") {
 fun rootAvailable(): Boolean {
     val shell = getRootShell()
     return shell.isRoot
-}
-
-fun isAbDevice(): Boolean {
-    val shell = getRootShell()
-    return ShellUtils.fastCmd(shell, "getprop ro.build.ab_update").trim().toBoolean()
-}
-
-fun isInitBoot(): Boolean {
-    val shell = getRootShell()
-    if (shell.isRoot) {
-        // if we have root, use /dev/block/by-name/init_boot to check
-        val abDevice = isAbDevice()
-        val initBootBlock = "/dev/block/by-name/init_boot${if (abDevice) "_a" else ""}"
-        val file = SuFile(initBootBlock)
-        file.shell = shell
-        return file.exists()
-    }
-    // https://source.android.com/docs/core/architecture/partitions/generic-boot
-    return ShellUtils.fastCmd(shell, "getprop ro.product.first_api_level").trim()
-        .toInt() >= Build.VERSION_CODES.TIRAMISU
-}
-
-suspend fun getCurrentKmi(): String = withContext(Dispatchers.IO) {
-    val shell = getRootShell()
-    val cmd = "boot-info current-kmi"
-    ShellUtils.fastCmd(shell, "${getKsuDaemonPath()} $cmd")
-}
-
-suspend fun getSupportedKmis(): List<String> = withContext(Dispatchers.IO) {
-    val shell = getRootShell()
-    val cmd = "boot-info supported-kmi"
-    val out = shell.newJob().add("${getKsuDaemonPath()} $cmd").to(ArrayList(), null).exec().out
-    out.filter { it.isNotBlank() }.map { it.trim() }
 }
 
 fun overlayFsAvailable(): Boolean {

@@ -370,13 +370,3 @@ out:
 		kfree(np);
 	}
 }
-
-void ksu_throne_tracker_init()
-{
-	// nothing to do
-}
-
-void ksu_throne_tracker_exit()
-{
-	// nothing to do
-}

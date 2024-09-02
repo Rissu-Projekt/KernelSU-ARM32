@@ -43,13 +43,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.KeyEventBlocker
-import me.weishu.kernelsu.ui.util.LkmSelection
 import me.weishu.kernelsu.ui.util.LocalSnackbarHost
 import me.weishu.kernelsu.ui.util.flashModule
-import me.weishu.kernelsu.ui.util.installBoot
 import me.weishu.kernelsu.ui.util.reboot
-import me.weishu.kernelsu.ui.util.restoreBoot
-import me.weishu.kernelsu.ui.util.uninstallPermanently
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -167,14 +163,7 @@ fun FlashScreen(navigator: DestinationsNavigator, flashIt: FlashIt) {
 
 @Parcelize
 sealed class FlashIt : Parcelable {
-    data class FlashBoot(val boot: Uri? = null, val lkm: LkmSelection, val ota: Boolean) :
-        FlashIt()
-
     data class FlashModule(val uri: Uri) : FlashIt()
-
-    data object FlashRestore : FlashIt()
-
-    data object FlashUninstall : FlashIt()
 }
 
 fun flashIt(
@@ -183,20 +172,7 @@ fun flashIt(
     onStderr: (String) -> Unit
 ) {
     when (flashIt) {
-        is FlashIt.FlashBoot -> installBoot(
-            flashIt.boot,
-            flashIt.lkm,
-            flashIt.ota,
-            onFinish,
-            onStdout,
-            onStderr
-        )
-
         is FlashIt.FlashModule -> flashModule(flashIt.uri, onFinish, onStdout, onStderr)
-
-        FlashIt.FlashRestore -> restoreBoot(onFinish, onStdout, onStderr)
-
-        FlashIt.FlashUninstall -> uninstallPermanently(onFinish, onStdout, onStderr)
     }
 }
 
@@ -229,10 +205,4 @@ private fun TopBar(status: FlashingStatus, onBack: () -> Unit = {}, onSave: () -
             }
         }
     )
-}
-
-@Preview
-@Composable
-fun InstallPreview() {
-    InstallScreen(EmptyDestinationsNavigator)
 }
